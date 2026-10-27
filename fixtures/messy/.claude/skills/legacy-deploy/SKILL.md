@@ -2,6 +2,7 @@
 name: legacy-deploy
 description: Use when deploying this service to the old staging cluster via the deprecated deploy script.
 version: 0.1.0
+updated: 2025-03-14
 ---
 
 # Deploy (deprecated)

@@ -163,7 +163,7 @@ python3 -m context_tax . --fail-over 0.12
 | `skill-no-disclosure` | 正文超过 3,000 tokens 且没有 `references/` |
 | `skill-thin` | 正文不足 60 tokens，那不是技能，是便签 |
 | `skill-name-mismatch` | frontmatter 的 `name` 与目录名不一致，敲目录名调用不出来 |
-| `skill-stale` | 半年没动过，多半在按旧世界的地图指路 |
+| `skill-stale` | 半年没改过，多半在按旧世界的地图指路。优先读 frontmatter 的 `updated:`，没有才看 mtime |
 
 `skill-overlap` 有两个必须承认的边界，写在这里以免你被自己的工具骗：
 
@@ -195,6 +195,11 @@ python3 -m context_tax . --fail-over 0.12
   其中一份，所以不按三份收税。这类重复单独报，不算进钱里。
 - **`--plugins` 是个上限**。插件缓存里的技能未必全被启用，所以这个开关算出来的
   是"最多这么多"，不是"一定这么多"。
+- **`skill-stale` 靠日期判断，而 mtime 会说谎**。全新 clone、CI、Docker 镜像里，
+  每个文件的 mtime 都等于 checkout 那一刻——所有技能看起来都是今天刚改的。
+  所以它优先读 frontmatter 里的 `updated:`（也认 `last-updated` / `modified` /
+  `reviewed` / `date`），没有才退回 mtime。想让 staleness 判断在任何机器上都成立，
+  就在 SKILL.md 里写一行 `updated: 2025-03-14`。
 
 ## 作为技能使用
 

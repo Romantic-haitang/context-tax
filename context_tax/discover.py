@@ -7,6 +7,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import date as _date
 from pathlib import Path
 
 try:  # Python 3.11+
@@ -136,7 +137,43 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str, bool]:
     return data, body, True
 
 
-def _age_days(path: Path) -> int:
+AGE_DATE_KEYS = ("updated", "last-updated", "last_updated", "modified", "reviewed", "date")
+
+_DATE_RE = re.compile(r"^(\d{4})[-/.](\d{1,2})(?:[-/.](\d{1,2}))?")
+_YEAR_RE = re.compile(r"^(\d{4})$")
+
+
+def _days_since(raw: str) -> int | None:
+    """把 frontmatter 里的日期解析成"多少天前"，认不出来就返回 None。"""
+    m = _DATE_RE.match(raw.strip())
+    if m:
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3) or 1)
+    else:
+        y2 = _YEAR_RE.match(raw.strip())
+        if not y2:
+            return None
+        y, mo, d = int(y2.group(1)), 1, 1
+    try:
+        return max(0, (_date.today() - _date(y, mo, d)).days)
+    except ValueError:
+        return None
+
+
+def _age_days(path: Path, fm: dict | None = None) -> int:
+    """多久没改了。
+
+    **优先看 frontmatter 里声明的日期，其次才看 mtime。** 因为 mtime 在全新
+    clone、CI、Docker 镜像里一律等于「刚刚 checkout 的时间」——所有文件看起来
+    都是今天刚改的，`skill-stale` 会静默失效，报出一个偏低的年龄。
+    作者可以在 frontmatter 里写 `updated: 2025-03-14` 显式声明，它会优先被采信。
+    """
+    if fm:
+        for key in AGE_DATE_KEYS:
+            raw = fm.get(key)
+            if isinstance(raw, str) and raw.strip():
+                age = _days_since(raw)
+                if age is not None:
+                    return age
     try:
         return max(0, int((time.time() - path.stat().st_mtime) // 86400))
     except OSError:
@@ -193,7 +230,7 @@ def _load_one(d: Path, scope: str) -> Skill:
         lines=body.count("\n") + 1,
         has_references=(d / "references").is_dir() or (d / "assets").is_dir(),
         frontmatter_ok=ok and "name" in fm and "description" in fm,
-        age_days=_age_days(p),
+        age_days=_age_days(p, fm),
         scope=scope,
     )
 
