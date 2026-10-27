@@ -90,6 +90,30 @@
         ],
         "max_findings": 0
       }
+    },
+    {
+      "name": "nested",
+      "path": "fixtures/nested",
+      "why": "技能目录里还套着技能——把一整个仓库 clone 进 skills/ 就是这样。早期版本一旦在目录里找到 SKILL.md 就 dirnames[:] = []，结果 20KB 的子技能一行都没进税单，报出来的数是假的。",
+      "expect": {
+        "skill_count": 2,
+        "must_not_have": [
+          "skill-name-mismatch"
+        ],
+        "max_findings": 0
+      }
+    },
+    {
+      "name": "naming",
+      "path": "fixtures/naming",
+      "why": "frontmatter 写 name: qimen-duanjua，目录却是 qimen-dunjia。宿主按 name 解析调用、按目录名展示，用户敲目录名敲不出来。",
+      "expect": {
+        "skill_count": 1,
+        "must_have_findings": [
+          "skill-name-mismatch"
+        ],
+        "max_findings": 1
+      }
     }
   ]
 }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import combinations
+import re
 
 from .discover import Inventory, InstructionFile, Skill
 from .tokens import jaccard, overlap_coefficient, word_set
@@ -204,7 +205,7 @@ def _detect_skill_quality(skills: list[Skill]) -> list[Finding]:
                 title=f"{len(bloated)} 个技能一触发就灌进 "
                       f"{sum(s.body_tokens for s in bloated):,} tokens",
                 detail=(
-                    f"{_fmt_list([s.name for s in bloated])}{verb} 3,000 tokens，"
+                    f"{_fmt_list([s.name for s in bloated])} {verb} 3,000 tokens，"
                     "且没有 references/ 目录。平时不占常驻税，但一旦触发就是一次性全额付款，"
                     "还会把真正相关的信息挤出注意力窗口。"
                 ),
@@ -371,6 +372,42 @@ def _detect_duplicate_copies(inv: Inventory) -> list[Finding]:
     ]
 
 
+def _norm_skill_name(raw: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", raw.strip().lower()).strip("-")
+
+
+def _detect_skill_naming(skills: list[Skill]) -> list[Finding]:
+    """frontmatter 的 name 和目录名对不上。
+
+    大多数宿主按 name 解析调用（`/name`），按目录名安装和展示。两者不一致时，
+    用户在界面上看到的是目录名，敲出来的是 name，于是"这个技能怎么调不出来"
+    就变成了一道玄学题——实际原因只是作者手滑。
+    """
+    pairs: list[tuple[Skill, str]] = []
+    for s in skills:
+        dirname = s.path.parent.name
+        if not dirname or dirname.startswith("."):
+            continue
+        if _norm_skill_name(s.name) and _norm_skill_name(s.name) != _norm_skill_name(dirname):
+            pairs.append((s, dirname))
+    if not pairs:
+        return []
+    shown = "；".join(f"`{s.name}` 在 `{d}/` 里" for s, d in pairs[:3])
+    more = f"，另有 {len(pairs) - 3} 个" if len(pairs) > 3 else ""
+    return [
+        Finding(
+            id="skill-name-mismatch",
+            severity="info",
+            title=f"{len(pairs)} 个技能的 name 和目录名对不上",
+            detail=(
+                f"{shown}{more}。宿主多半按 name 解析调用、按目录名展示安装，"
+                "两边不一致时用户看到的名字敲不出来，只会以为是宿主抽风。"
+            ),
+            fix="把 frontmatter 的 name 改成和目录名一致（推荐），或者反过来重命名目录。别让它们各自为政。",
+            saved_tokens=0,
+            refs=[str(s.path) for s, _ in pairs],
+        )
+    ]
 def analyze(
     inv: Inventory,
     window: int = 200_000,
@@ -397,6 +434,7 @@ def analyze(
     findings += _detect_skill_overlap(inv.skills)
     findings += _detect_skill_reachable(inv.skills)
     findings += _detect_skill_quality(inv.skills)
+    findings += _detect_skill_naming(inv.skills)
     findings += _detect_instructions(inv.instructions)
     findings += _detect_mcp(inv, window)
     findings += _detect_stale(inv.skills)

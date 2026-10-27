@@ -156,7 +156,9 @@ def _iter_skill_dirs(skills_root: Path) -> list[Path]:
             continue
         if (Path(dirpath) / "SKILL.md").is_file():
             found.append(Path(dirpath))
-            dirnames[:] = []
+            # 这里**不能**截断遍历。把一整个技能仓库 clone 进 skills/ 是很常见的用法，
+            # 仓库里往往还套着子技能（skills/mingli/qimen-dunjia/SKILL.md）。
+            # 早期版本在这里 dirnames[:] = []，导致 20KB 的子技能一行都没被算进税单。
     return sorted(found)
 
 
