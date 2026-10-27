@@ -21,7 +21,7 @@ classifiers = [
 context-tax = "context_tax.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/OWNER/context-tax"
+Homepage = "https://github.com/Romantic-haitang/context-tax"
 
 [tool.setuptools]
 packages = ["context_tax"]

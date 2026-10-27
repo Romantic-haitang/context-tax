@@ -55,7 +55,7 @@
 不需要安装，不需要依赖，Python 3.9+ 就行：
 
 ```bash
-git clone https://github.com/OWNER/context-tax && cd context-tax
+git clone https://github.com/Romantic-haitang/context-tax && cd context-tax
 python3 -m context_tax /path/to/your/project
 ```
 
@@ -114,7 +114,7 @@ python3 -m context_tax . --fail-over 0.12
 ## 作为技能使用
 
 ```bash
-npx skills add OWNER/context-tax
+npx skills add Romantic-haitang/context-tax
 ```
 
 装好之后，你可以直接说"帮我看看我的 agent 配置是不是太胖了"，
