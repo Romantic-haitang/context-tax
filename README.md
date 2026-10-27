@@ -1,5 +1,10 @@
 # context-tax
 
+[![ci](https://github.com/Romantic-haitang/context-tax/actions/workflows/ci.yml/badge.svg)](https://github.com/Romantic-haitang/context-tax/actions/workflows/ci.yml)
+![python](https://img.shields.io/badge/python-3.9%2B-blue)
+![deps](https://img.shields.io/badge/dependencies-0-brightgreen)
+![read--only](https://img.shields.io/badge/read--only-yes-brightgreen)
+
 **你的 agent 配置每轮都在缴税。这个工具把税单打出来。**
 
 技能的 description、MCP 的工具定义、`CLAUDE.md` —— 这些东西在**每一次**请求里都会重新
