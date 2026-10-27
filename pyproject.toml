@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "context-tax"
+version = "0.1.0"
+description = "算清你的 agent 配置每轮偷偷吃掉多少上下文。只读，零依赖。"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["agent", "skills", "context", "tokens", "claude-code", "mcp", "cost"]
+classifiers = [
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+context-tax = "context_tax.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/OWNER/context-tax"
+
+[tool.setuptools]
+packages = ["context_tax"]
+
+[tool.setuptools.package-data]
+context_tax = ["pricing.json"]

@@ -1,0 +1,19 @@
+{
+  "//": "示例价格，单位：美元 / 百万输入 tokens。请改成你自己的实际账单单价，这个文件只是默认值。",
+  "tiers": {
+    "fast": { "price_in": 0.8, "note": "小模型 / 轻任务" },
+    "standard": { "price_in": 3.0, "note": "默认档" },
+    "frontier": { "price_in": 15.0, "note": "旗舰模型" }
+  },
+  "default": "standard",
+  "cache": {
+    "read_multiplier": 0.1,
+    "write_multiplier": 1.25
+  },
+  "assumptions": {
+    "mcp_tool_tokens": 150,
+    "mcp_tools_per_server": 15,
+    "requests_per_month": 1500,
+    "cache_hit_rate": 0.8
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"] },
+    "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."] },
+    "postgres": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-postgres"] },
+    "slack": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-slack"] },
+    "linear": { "command": "npx", "args": ["-y", "linear-mcp"] },
+    "notion": { "command": "npx", "args": ["-y", "notion-mcp"] },
+    "browser": { "command": "npx", "args": ["-y", "@playwright/mcp"] },
+    "obsidian": { "command": "npx", "args": ["-y", "obsidian-mcp"] }
+  }
+}

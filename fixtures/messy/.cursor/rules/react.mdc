@@ -1,0 +1,8 @@
+---
+description: React 组件约定
+globs: src/**/*.tsx
+alwaysApply: false
+---
+
+函数组件 + hooks，不用 class。props 必须显式类型。
+副作用的依赖数组不要撒谎。列表 key 不要用 index。

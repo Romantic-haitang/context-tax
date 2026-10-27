@@ -1,0 +1,43 @@
+{
+  "note": "每个 case 对一个 fixture 断言。数字是回归基线——改动检测逻辑时如果这里的断言挂了，先想清楚是有意改进还是把阈值调松了。",
+  "cases": [
+    {
+      "name": "messy",
+      "path": "fixtures/messy",
+      "why": "典型的『装了四个月什么都没删』配置：重复指令文件、三个打架的 review 技能、8 台 MCP、一个 6K tokens 的巨型技能、一个去年三月的老技能。",
+      "expect": {
+        "tax_rate_between": [0.08, 0.12],
+        "grade": "中度",
+        "must_have_findings": [
+          "instruction-duplicate",
+          "skill-overlap",
+          "mcp-flood",
+          "skill-no-disclosure",
+          "skill-thin",
+          "skill-stale"
+        ],
+        "must_not_have": ["instruction-bloat"],
+        "min_findings": 7,
+        "min_recoverable_pct": 0.3
+      }
+    },
+    {
+      "name": "clean",
+      "path": "fixtures/clean",
+      "why": "健康配置：单一指令文件、2 个互不重叠的技能、2 台 server。工具应该闭嘴。",
+      "expect": {
+        "tax_rate_between": [0.0, 0.04],
+        "grade": "免税",
+        "must_have_findings": [],
+        "must_not_have": [
+          "instruction-duplicate",
+          "skill-overlap",
+          "mcp-flood",
+          "skill-no-disclosure",
+          "skill-thin"
+        ],
+        "max_findings": 0
+      }
+    }
+  ]
+}
