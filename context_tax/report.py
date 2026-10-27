@@ -195,6 +195,9 @@ def render_text(bill: Bill, color: bool = True, verbose: bool = False) -> str:
 
     if not bill.findings:
         out.append(p(GREEN, "  ✓ 没找到可回收的浪费。这个配置值得截图。"))
+        for n in bill.notes:
+            for line in wrap(n, WIDTH - 6):
+                out.append(p(YELLOW, line))
         out.append("")
         return "\n".join(out)
 
@@ -228,6 +231,11 @@ def render_text(bill: Bill, color: bool = True, verbose: bool = False) -> str:
         if verbose and f.refs:
             for r in f.refs[:6]:
                 out.append(p(DIM, "      · " + r))
+
+    for n in bill.notes:
+        out.append("")
+        for line in wrap(n, WIDTH - 6):
+            out.append(p(YELLOW, line))
 
     out.append("")
     out.append(p(DIM, "  " + "═" * WIDTH))

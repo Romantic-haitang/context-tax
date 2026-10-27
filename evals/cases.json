@@ -6,7 +6,10 @@
       "path": "fixtures/messy",
       "why": "典型的『装了四个月什么都没删』配置：重复指令文件、三个打架的 review 技能、8 台 MCP、一个 6K tokens 的巨型技能、一个去年三月的老技能。",
       "expect": {
-        "tax_rate_between": [0.08, 0.12],
+        "tax_rate_between": [
+          0.08,
+          0.12
+        ],
         "grade": "中度",
         "must_have_findings": [
           "instruction-duplicate",
@@ -16,7 +19,9 @@
           "skill-thin",
           "skill-stale"
         ],
-        "must_not_have": ["instruction-bloat"],
+        "must_not_have": [
+          "instruction-bloat"
+        ],
         "min_findings": 7,
         "min_recoverable_pct": 0.3
       }
@@ -26,7 +31,10 @@
       "path": "fixtures/clean",
       "why": "健康配置：单一指令文件、2 个互不重叠的技能、2 台 server。工具应该闭嘴。",
       "expect": {
-        "tax_rate_between": [0.0, 0.04],
+        "tax_rate_between": [
+          0.0,
+          0.04
+        ],
         "grade": "免税",
         "must_have_findings": [],
         "must_not_have": [
@@ -35,6 +43,50 @@
           "mcp-flood",
           "skill-no-disclosure",
           "skill-thin"
+        ],
+        "max_findings": 0
+      }
+    },
+    {
+      "name": "dup",
+      "path": "fixtures/dup",
+      "why": "同一个 notify 技能在 .agents 和 .codex 各存一份且已漂移。副本不能重复计费，也不能被拿去和自己比——曾经就是这里报出 `notify ↔ notify` 重合度 100%。",
+      "expect": {
+        "skill_count": 2,
+        "dup_group_count": 1,
+        "must_have_findings": [
+          "skill-multi-copy"
+        ],
+        "must_not_contain_title": [
+          "↔ notify",
+          "notify ↔"
+        ],
+        "max_findings": 1
+      }
+    },
+    {
+      "name": "dup-as-home",
+      "path": "fixtures/dup",
+      "as_home": true,
+      "why": "模拟 `context_tax ~ --global`：root 就是 home，.agents/skills 会被项目侧和全局侧各扫一遍。当初 32 个技能被算成 64 个，55 条『严重』全是自己跟自己打架。",
+      "expect": {
+        "skill_count": 2,
+        "dup_group_count": 1,
+        "must_not_contain_title": [
+          "↔ notify",
+          "notify ↔"
+        ],
+        "max_findings": 1
+      }
+    },
+    {
+      "name": "terse",
+      "path": "fixtures/terse",
+      "why": "一个 3 个词的描述 vs 一个 30 个词的描述，共享 codex/create。overlap_coefficient 除以较小集合，必然算出很高分；这是误报，不是撞车。",
+      "expect": {
+        "skill_count": 2,
+        "must_not_have": [
+          "skill-overlap"
         ],
         "max_findings": 0
       }

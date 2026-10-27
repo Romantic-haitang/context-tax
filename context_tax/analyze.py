@@ -15,6 +15,16 @@ SKILL_BODY_TRIGGER_BUDGET = 3000
 THIN_SKILL_TOKENS = 60
 STALE_DAYS = 180
 
+# 描述重叠检测的门槛。低于这些规模的词集不能拿来算重合度——
+# 否则两个各自只有三个词的描述共享一个 "codex" 就能算出 75%。
+MIN_DESC_WORDS = 4
+MIN_SHARED_WORDS = 4
+DESC_JACCARD_CANDIDATE = 0.45
+DESC_COOP_CANDIDATE = 0.70
+BODY_COOP_CANDIDATE = 0.60
+BODY_MIN_WORDS = 40
+COOP_MAX_SIZE_RATIO = 3.0
+
 SEVERITY_ORDER = {"critical": 0, "warn": 1, "info": 2}
 SEVERITY_LABEL = {"critical": "严重", "warn": "警告", "info": "提示"}
 
@@ -79,24 +89,50 @@ def _detect_skill_overlap(skills: list[Skill]) -> list[Finding]:
     sigs = {s.path: (word_set(s.description), word_set(s.body[:1500])) for s in skills}
     seen: set[tuple[str, str]] = set()
     for a, b in combinations(skills, 2):
-        desc_j = jaccard(sigs[a.path][0], sigs[b.path][0])
-        coop = overlap_coefficient(sigs[a.path][0], sigs[b.path][0])
-        body_o = overlap_coefficient(sigs[a.path][0], sigs[b.path][1])
-        if desc_j < 0.30 and coop < 0.70 and body_o < 0.65:
+        # 同一份技能不跟自己比。dedupe 之后理论上不会出现，但这里再挡一道，
+        # 免得哪天调用方忘了去重就报出 `sdk ↔ sdk` 这种没法解释的结论。
+        if a.name == b.name or a.path.resolve() == b.path.resolve():
+            continue
+        da, db = sigs[a.path][0], sigs[b.path][0]
+        ba, bb = sigs[a.path][1], sigs[b.path][1]
+        # 词集太小的时候重合度没有意义：去掉虚词后只剩两三个词，
+        # 共享一个 "codex" 就能算出很高的比例。宁可不报。
+        if min(len(da), len(db)) < MIN_DESC_WORDS:
+            continue
+        shared = len(da & db)
+        if shared < MIN_SHARED_WORDS:
+            continue
+        desc_j = jaccard(da, db)
+        # overlap_coefficient 除以较小的那个集合，所以"3 个词 vs 77 个词"
+        # 也能算出 100%。集合规模悬殊时这个指标没有意义，直接作废。
+        size_ratio = max(len(da), len(db)) / min(len(da), len(db))
+        desc_coop = overlap_coefficient(da, db) if size_ratio <= COOP_MAX_SIZE_RATIO else 0.0
+        # 正文对正文（同量级），比"短描述 vs 长正文"可靠得多。
+        body_o = 0.0
+        if min(len(ba), len(bb)) >= BODY_MIN_WORDS:
+            body_ratio = max(len(ba), len(bb)) / min(len(ba), len(bb))
+            if body_ratio <= COOP_MAX_SIZE_RATIO:
+                body_o = overlap_coefficient(ba, bb)
+            if body_o < BODY_COOP_CANDIDATE:
+                body_o = 0.0
+        if desc_j < DESC_JACCARD_CANDIDATE and desc_coop < DESC_COOP_CANDIDATE and not body_o:
             continue
         key = tuple(sorted([str(a.path), str(b.path)]))
         if key in seen:
             continue
         seen.add(key)
         saved = min(a.desc_tokens, b.desc_tokens)
-        worst = max(desc_j, coop, body_o)
+        worst = max(desc_j, desc_coop, body_o)
+        # 只省十几个 token 的重叠，谈不上"严重"。金额决定档位，不是比例。
+        severity = "critical" if (desc_j >= 0.70 and shared >= 6) else "warn"
         out.append(
             Finding(
                 id="skill-overlap",
-                severity="critical" if worst >= 0.60 else "warn",
+                severity=severity,
                 title=f"触发词打架：{a.name} ↔ {b.name}",
                 detail=(
-                    f"两句描述的词重合度 {worst:.0%}——模型看到同一个请求时会在两者之间随机挑一个，"
+                    f"两句描述共享 {shared} 个实质词，重合度 {worst:.0%}——"
+                    f"模型看到同一个请求时会在两者之间随机挑一个，"
                     f"你以为是双保险，实际是互相拆台。"
                 ),
                 fix=f"合并成一个技能，或给两者的 description 加互斥边界（用于…；不用于…）。"
@@ -300,6 +336,41 @@ def _detect_stale(skills: list[Skill]) -> list[Finding]:
 
 # --- main --------------------------------------------------------------------
 
+def _detect_duplicate_copies(inv: Inventory) -> list[Finding]:
+    """同名技能在多个 harness 目录各存一份。
+
+    这类副本不会叠加常驻税（运行时只会加载其中一个），所以 saved_tokens 记 0。
+    真正的成本是维护漂移：你改了 .agents 里那份，.codex 里那份还停在三个月前，
+    两个 harness 从此开始给你不同的答案。
+    """
+    groups = inv.duplicate_groups
+    if not groups:
+        return []
+
+    harnesses = sorted({s.scope for g in groups for s in g})
+    examples = [f"{g[0].name}（{len(g)} 份）" for g in groups]
+    drift = [g for g in groups if len({s.desc_tokens for s in g}) > 1 or
+             len({s.body_tokens for s in g}) > 1]
+    return [
+        Finding(
+            id="skill-multi-copy",
+            severity="warn" if drift else "info",
+            title=f"{len(groups)} 个技能在多个目录各存一份：{_fmt_list(examples)}",
+            detail=(
+                f"同名的 SKILL.md 出现在 {len(harnesses)} 处目录里。因为运行时只会加载其中一份，"
+                "它不叠加常驻税——所以这笔账不算在钱上。"
+                + (
+                    f"但有 {len(drift)} 组的内容已经不一致了，说明你改了其中一份、忘了另一份。"
+                    if drift else "目前各副本内容一致，但下次你只改一处的时候就不一致了。"
+                )
+            ),
+            fix="用一个目录做唯一事实来源，其余用软链接或安装脚本同步。别手工维护两份。",
+            saved_tokens=0,
+            refs=[str(s.path) for g in groups for s in g][:8],
+        )
+    ]
+
+
 def analyze(
     inv: Inventory,
     window: int = 200_000,
@@ -322,6 +393,7 @@ def analyze(
     trigger_total = sum(s.body_tokens for s in inv.skills)
 
     findings: list[Finding] = []
+    findings += _detect_duplicate_copies(inv)
     findings += _detect_skill_overlap(inv.skills)
     findings += _detect_skill_reachable(inv.skills)
     findings += _detect_skill_quality(inv.skills)

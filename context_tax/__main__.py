@@ -52,6 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("path", nargs="?", default=".", help="项目根目录（默认当前目录）")
     p.add_argument("-g", "--global", dest="include_global", action="store_true",
                    help="同时扫描 ~/.claude、~/.agents 等全局配置")
+    p.add_argument("--plugins", dest="include_plugins", action="store_true",
+                   help="纳入宿主插件自带的技能（~/.claude/plugins、~/.workbuddy/plugins/cache 等），"
+                        "这部分往往才是常驻开销的大头")
     p.add_argument("--window", type=int, default=200_000, help="上下文窗口 tokens（默认 200000）")
     p.add_argument("--requests", type=int, default=1500, help="每月请求数（默认 1500）")
     p.add_argument("--price", type=float, default=3.0, help="每百万输入 tokens 价格（默认 3.0 美元）")
@@ -98,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
         include_global=args.include_global,
         tool_tokens=args.mcp_tool_tokens,
         tools_per_server=args.mcp_tools_per_server,
+        include_plugins=args.include_plugins,
     )
     bill = analyze(
         inv,

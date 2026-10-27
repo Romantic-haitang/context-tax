@@ -41,6 +41,15 @@ MCP_CONFIG_NAMES = [
 
 MAX_SKILL_DEPTH = 3
 
+# 宿主会把插件自带的技能塞进每一次请求。这些技能不在 ~/.claude/skills 里，
+# 而在插件缓存深处（.../<plugin>/<version>/skills/<name>/SKILL.md），
+# 不专门去找就会漏掉，报出来的税负率会低得离谱。
+PLUGIN_CACHE_ROOTS = (
+    ".claude/plugins",
+    ".workbuddy/plugins/cache",
+    ".codex/plugins",
+)
+
 
 @dataclass
 class Skill:
@@ -84,6 +93,8 @@ class Inventory:
     instructions: list[InstructionFile] = field(default_factory=list)
     mcp: list[McpServer] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    # 同名技能在不同 harness 目录里各存一份（只算一份税，但要报出来）
+    duplicate_groups: list[list[Skill]] = field(default_factory=list)
 
 
 # --- frontmatter -------------------------------------------------------------
@@ -192,6 +203,73 @@ def load_skills(skills_root: Path, scope: str, notes: list[str]) -> list[Skill]:
     return skills
 
 
+def _iter_plugin_skill_roots(base: Path, max_depth: int = 8) -> list[Path]:
+    """插件缓存里所有 `skills` 目录（版本号那层很深，所以要放宽深度）。"""
+    roots: list[Path] = []
+    base_depth = len(base.parts)
+    for dirpath, dirnames, _ in os.walk(base):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        cur = Path(dirpath)
+        if cur.name == "skills" and cur != base:
+            roots.append(cur)
+            dirnames[:] = []
+            continue
+        if len(cur.parts) - base_depth >= max_depth:
+            dirnames[:] = []
+    return roots
+
+
+def plugin_skill_roots(home: Path) -> list[Path]:
+    out: list[Path] = []
+    for rel in PLUGIN_CACHE_ROOTS:
+        base = home / rel
+        if base.is_dir():
+            out.extend(_iter_plugin_skill_roots(base))
+    return out
+
+
+def load_plugin_skills(home: Path, notes: list[str]) -> list[Skill]:
+    skills: list[Skill] = []
+    for sr in plugin_skill_roots(home):
+        skills.extend(load_skills(sr, "plugin", notes))
+    return skills
+
+
+def _dedupe_skills(skills: list[Skill]) -> tuple[list[Skill], list[list[Skill]]]:
+    """合并重复技能。
+
+    两种重复都会把账算错：
+      1. 同一份 SKILL.md 被扫两遍（root 就是 home 时，.agents/skills 既算项目又算全局）
+      2. 同名技能在多个 harness 目录各存一份（运行时只会加载其中一个）
+
+    重复计入不但会把税负算高，还会让「描述重叠」检测器拿一个技能和它自己比，
+    报出 `sdk ↔ sdk` 这种自己跟自己打架的结论。所以按路径先去重，再按名字
+    只留一份计费，其余收进 duplicate_groups 单独报告。
+    """
+    by_path: dict[Path, Skill] = {}
+    for s in skills:
+        key = s.path.resolve()
+        prev = by_path.get(key)
+        # 同一路径优先保留 project 那份，它更接近实际加载位置
+        if prev is None or (prev.scope == "global" and s.scope == "project"):
+            by_path[key] = s
+
+    by_name: dict[str, list[Skill]] = {}
+    for s in by_path.values():
+        by_name.setdefault(s.name, []).append(s)
+
+    unique: list[Skill] = []
+    groups: list[list[Skill]] = []
+    for group in by_name.values():
+        group.sort(key=lambda s: (s.scope != "project", str(s.path)))
+        unique.append(group[0])
+        if len(group) > 1:
+            groups.append(group)
+    unique.sort(key=lambda s: s.name)
+    groups.sort(key=lambda g: g[0].name)
+    return unique, groups
+
+
 _CURSOR_MDC_ALWAYS_RE = re.compile(r"^\s*alwaysApply\s*:\s*true", re.MULTILINE | re.IGNORECASE)
 _CURSOR_MDC_GLOBS_RE = re.compile(r"^\s*globs\s*:", re.MULTILINE | re.IGNORECASE)
 
@@ -288,7 +366,8 @@ def load_mcp(root: Path, tool_tokens: int, tools_per_server: int, notes: list[st
 
 
 def collect(root: Path, include_global: bool = False, home: Path | None = None,
-            tool_tokens: int = 150, tools_per_server: int = 15) -> Inventory:
+            tool_tokens: int = 150, tools_per_server: int = 15,
+            include_plugins: bool = False) -> Inventory:
     root = root.resolve()
     inv = Inventory(root=root)
 
@@ -301,6 +380,7 @@ def collect(root: Path, include_global: bool = False, home: Path | None = None,
         root / ".claude" / "skills",
         root / ".agents" / "skills",
         root / ".codex" / "skills",
+        root / ".cursor" / "skills",
     ]
     for sr in project_skill_roots:
         if sr.is_dir():
@@ -311,7 +391,13 @@ def collect(root: Path, include_global: bool = False, home: Path | None = None,
 
     if include_global:
         home = home or Path.home()
-        for sr in (home / ".claude" / "skills", home / ".agents" / "skills"):
+        for sr in (
+            home / ".claude" / "skills",
+            home / ".agents" / "skills",
+            home / ".codex" / "skills",
+            home / ".cursor" / "skills",
+            home / ".workbuddy" / "skills",
+        ):
             if sr.is_dir():
                 inv.skills.extend(load_skills(sr, "global", inv.notes))
         for name, kind in ALWAYS_ON_NAMES.items():
@@ -338,4 +424,18 @@ def collect(root: Path, include_global: bool = False, home: Path | None = None,
                     if not any(s.name == n for s in inv.mcp):
                         inv.mcp.append(McpServer(n, cfg, tool_tokens * tools_per_server))
 
+        if include_plugins:
+            inv.skills.extend(load_plugin_skills(home, inv.notes))
+        else:
+            # 不纳入也要说一声，否则会给人"免税"的错觉
+            available = len({
+                d.name for sr in plugin_skill_roots(home) for d in _iter_skill_dirs(sr)
+            })
+            if available:
+                inv.notes.append(
+                    f"宿主插件里另有 {available} 个技能没有计入（加 --plugins 纳入）——"
+                    "它们同样每轮都在占上下文。"
+                )
+
+    inv.skills, inv.duplicate_groups = _dedupe_skills(inv.skills)
     return inv

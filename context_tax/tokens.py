@@ -56,12 +56,31 @@ _LATIN_WORD = re.compile(r"[a-z][a-z0-9_\-]{1,}")
 _CJK_RUN = re.compile(r"[\u4e00-\u9fff]+")
 
 STOPWORDS = {
-    "the", "and", "for", "with", "this", "that", "use", "when", "you", "your",
-    "are", "was", "will", "can", "into", "from", "not", "but", "all", "any",
-    "skill", "skills", "agent", "agents", "file", "files", "code", "help",
-    "helps", "helper", "tool", "tools", "task", "tasks", "user", "users",
-    "一个", "这个", "可以", "使用", "用于", "进行", "以及", "或者", "如果",
-    "我们", "你们", "他们", "需要", "帮助", "支持", "相关", "内容", "功能",
+    # 英文功能词。不收进来会让 "to" "or" "is" 变成"实质词"，
+    # 两个短描述共享一个虚词就被判成撞车。
+    "a", "an", "the", "and", "or", "but", "nor", "so", "yet",
+    "of", "to", "in", "on", "at", "by", "for", "from", "into", "onto",
+    "with", "without", "within", "about", "as", "than", "then", "that", "this",
+    "is", "are", "was", "were", "be", "been", "being", "do", "does", "did",
+    "has", "have", "had", "will", "would", "can", "could", "should", "may",
+    "might", "must", "it", "its", "they", "them", "their", "there", "here",
+    "you", "your", "yours", "we", "our", "us", "i", "me", "my", "he", "she",
+    "his", "her", "if", "else", "when", "whenever", "where", "which", "who",
+    "what", "how", "why", "all", "any", "some", "each", "every", "no", "not",
+    "only", "just", "also", "very", "more", "most", "less", "much", "many",
+    "such", "same", "other", "another", "up", "down", "out", "off", "over",
+    "under", "again", "once", "both", "either", "neither", "via", "per",
+    # 这个生态里被滥用到失去区分度的词
+    "use", "used", "using", "skill", "skills", "agent", "agents", "file",
+    "files", "code", "help", "helps", "helper", "tool", "tools", "task",
+    "tasks", "user", "users", "guide", "guides", "create", "creates",
+    "creating", "make", "makes", "get", "gets", "want", "wants", "need",
+    "needs", "like", "e", "g",
+    # 中文
+    "一个", "这个", "那个", "可以", "使用", "用于", "进行", "以及", "或者",
+    "如果", "我们", "你们", "他们", "需要", "帮助", "支持", "相关", "内容",
+    "功能", "时候", "什么", "怎么", "如何", "所有", "一些", "这些", "那些",
+    "并且", "而是", "不是", "没有", "就是", "还是", "已经", "可能", "应该",
 }
 
 

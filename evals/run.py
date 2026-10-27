@@ -23,9 +23,15 @@ GREEN, RED, DIM, RESET = "\x1b[32m", "\x1b[31m", "\x1b[2m", "\x1b[0m"
 
 def check(case: dict, verbose: bool) -> list[str]:
     exp = case["expect"]
-    inv = collect(ROOT / case["path"])
+    kwargs: dict = {}
+    if case.get("as_home"):
+        # 模拟 `context_tax <home> --global`：root 就是 home，同一个 skills 目录
+        # 会被"项目"和"全局"各扫一遍，必须去重。
+        kwargs = {"include_global": True, "home": ROOT / case["path"]}
+    inv = collect(ROOT / case["path"], **kwargs)
     bill = analyze(inv)
     ids = {f.id for f in bill.findings}
+    titles = [f.title for f in bill.findings]
     failures: list[str] = []
 
     def fail(msg: str) -> None:
@@ -38,12 +44,21 @@ def check(case: dict, verbose: bool) -> list[str]:
     if "grade" in exp and bill.grade != exp["grade"]:
         fail(f"等级是 {bill.grade}，期望 {exp['grade']}")
 
+    if "skill_count" in exp and len(inv.skills) != exp["skill_count"]:
+        fail(f"去重后有 {len(inv.skills)} 个技能，期望 {exp['skill_count']}")
+
+    if "dup_group_count" in exp and len(inv.duplicate_groups) != exp["dup_group_count"]:
+        fail(f"有 {len(inv.duplicate_groups)} 组重复，期望 {exp['dup_group_count']}")
+
     for need in exp.get("must_have_findings", []):
         if need not in ids:
             fail(f"缺少 {need}")
     for banned in exp.get("must_not_have", []):
         if banned in ids:
             fail(f"不该出现 {banned}")
+    for bad in exp.get("must_not_contain_title", []):
+        if any(bad in t for t in titles):
+            fail(f"标题里不该出现「{bad}」——这是自己跟自己比")
 
     if "min_findings" in exp and len(bill.findings) < exp["min_findings"]:
         fail(f"只有 {len(bill.findings)} 条问题，至少要有 {exp['min_findings']}")
