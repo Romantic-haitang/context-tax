@@ -443,6 +443,12 @@ def analyze(
     recoverable = min(always_on, sum(f.saved_tokens for f in findings if f.scope == "always"))
     rate = always_on / window if window else 0.0
     grade, note = _grade(rate)
+    # 等级只由税负率决定，但「免税」旁边挂着一条严重问题会自相矛盾——
+    # 真实案例：76 个技能的机器税负率 3.2%，同时两个文档技能的描述重合 93%。
+    # 钱确实不多，可这个配置会选错技能。别让一句话把另一个结论盖掉。
+    critical = [f for f in findings if f.severity == "critical"]
+    if critical and rate < 0.08:
+        note = f"税不高，但有 {len(critical)} 条严重问题——钱不是这里的全部损失"
 
     effective_mult = cache_hit * CACHE_READ_MULTIPLIER + (1 - cache_hit)
     monthly_tokens = always_on * requests
