@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="388" viewBox="0 0 880 388" role="img" aria-label="Resident context tax: the expected culprit versus two measured configs">
+<clipPath id="c0"><rect x="196.0" y="78" width="652.0" height="38" rx="5"/></clipPath>
+<clipPath id="c1"><rect x="196.0" y="162" width="652.0" height="38" rx="5"/></clipPath>
+<clipPath id="c2"><rect x="196.0" y="246" width="652.0" height="38" rx="5"/></clipPath>
+<text x="32" y="34" font-size="11" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" font-weight="700" letter-spacing="2.4">THE BIG HEAD</text>
+<text x="150" y="34" font-size="12" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">·</text>
+<text x="166" y="34" font-size="12" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">what you expect to be paying for, and what two real configs actually pay for</text>
+<text x="176.0" y="95" font-size="13.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" font-weight="600" text-anchor="end">The guess</text>
+<text x="176.0" y="111" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" text-anchor="end">MCP is the hog</text>
+<rect x="196.0" y="78" width="652.0" height="38" rx="5" fill="#f6f8fa"/>
+<rect x="196.5" y="78.5" width="651.0" height="37" rx="4.5" fill="none" stroke="#d0d7de" stroke-width="1" stroke-dasharray="4 4"/>
+<g clip-path="url(#c0)">
+<rect x="196.00" y="78" width="456.40" height="38" fill="#c2603a" fill-opacity="0.26"/>
+<rect x="652.40" y="78" width="130.40" height="38" fill="#2f7fb5" fill-opacity="0.26"/>
+<rect x="782.80" y="78" width="65.20" height="38" fill="#7d6fa8" fill-opacity="0.26"/>
+</g>
+<text x="522.0" y="102" font-size="12" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" text-anchor="middle" font-style="italic">nobody has ever measured this row</text>
+<text x="196.0" y="138" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">The mental model almost everyone starts with — and it is wrong often enough to matter.</text>
+<text x="176.0" y="179" font-size="13.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#1f2328" font-weight="600" text-anchor="end">A real laptop</text>
+<text x="176.0" y="195" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" text-anchor="end">76 skills · 0 MCP servers</text>
+<rect x="196.0" y="162" width="652.0" height="38" rx="5" fill="#f6f8fa"/>
+<g clip-path="url(#c1)">
+<rect x="196.00" y="162" width="652.00" height="38" fill="#2f7fb5"/>
+</g>
+<text x="212.0" y="186" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#ffffff" font-weight="600">100%  ·  6,404 tokens</text>
+<text x="196.0" y="222" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">Every token of resident tax is a skill description. Two doc skills share 88 words of it: 93% overlap.</text>
+<text x="176.0" y="263" font-size="13.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#1f2328" font-weight="600" text-anchor="end">fixtures/messy</text>
+<text x="176.0" y="279" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76" text-anchor="end">7 skills · 8 servers · 3 files</text>
+<rect x="196.0" y="246" width="652.0" height="38" rx="5" fill="#f6f8fa"/>
+<g clip-path="url(#c2)">
+<rect x="196.00" y="246" width="7.17" height="38" fill="#2f7fb5"/>
+<rect x="203.17" y="246" width="604.40" height="38" fill="#c2603a"/>
+<rect x="807.58" y="246" width="40.42" height="38" fill="#7d6fa8"/>
+</g>
+<text x="212.0" y="270" font-size="12.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#ffffff" font-weight="600">92.7%  ·  18,000 tokens</text>
+<text x="196.0" y="306" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">Here the servers are the hog and seven skill descriptions cost 209 tokens. Same algorithm, opposite verdict.</text>
+<rect x="196" y="339" width="10" height="10" rx="2.5" fill="#2f7fb5"/>
+<text x="212" y="348" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">skill descriptions</text>
+<rect x="336" y="339" width="10" height="10" rx="2.5" fill="#c2603a"/>
+<text x="352" y="348" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">MCP tool definitions</text>
+<rect x="494" y="339" width="10" height="10" rx="2.5" fill="#7d6fa8"/>
+<text x="510" y="348" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">instruction files</text>
+<text x="196.0" y="374" font-size="11.5" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif" fill="#636c76">Shares of resident tokens per request — the tokens a config costs whether or not this turn uses it.</text>
+</svg>
