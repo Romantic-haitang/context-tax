@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Byte-compile
+        run: python -m compileall -q context_tax evals scripts
+
+      - name: Evals
+        run: python evals/run.py -v
+
+      - name: SKILL.md conventions
+        run: python scripts/check_skill.py
+
+      - name: Runs on its own repo
+        run: python -m context_tax . --no-color
+
+  self-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: This repo must stay under 4% tax
+        run: python -m context_tax . --fail-over 0.04 --no-color
