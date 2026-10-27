@@ -14,8 +14,8 @@ Skill descriptions, MCP tool definitions, `CLAUDE.md` — the same bytes go out 
 `context-tax` is not another SKILL.md linter. It counts money and window: **what your idle config costs per turn, and which lines on that bill you can actually get refunded.**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/context-tax-dark.svg">
-  <img alt="Resident context tax: the expected culprit versus two measured configs — one spends 100% of it on skill descriptions, the other 92.7% on MCP tool definitions" src="assets/context-tax.svg" width="880">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Romantic-haitang/context-tax/main/assets/context-tax-dark.svg">
+  <img alt="Resident context tax: the expected culprit versus two measured configs — one spends 100% of it on skill descriptions, the other 92.7% on MCP tool definitions" src="https://raw.githubusercontent.com/Romantic-haitang/context-tax/main/assets/context-tax.svg" width="880">
 </picture>
 
 ## Three real runs
@@ -181,8 +181,8 @@ Then just say "is my agent config too fat?" It runs the audit, reads the report,
 `context-tax` 不是又一个 SKILL.md 格式检查器。它算的是钱和窗口：**你每轮为闲置配置付了多少，其中哪几笔可以退。**
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/context-tax-dark.svg">
-  <img alt="常驻上下文税：以为的大头 vs 实测的大头" src="assets/context-tax.svg" width="880">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Romantic-haitang/context-tax/main/assets/context-tax-dark.svg">
+  <img alt="常驻上下文税：以为的大头 vs 实测的大头" src="https://raw.githubusercontent.com/Romantic-haitang/context-tax/main/assets/context-tax.svg" width="880">
 </picture>
 
 ### 三个真实输出
