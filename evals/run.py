@@ -9,16 +9,61 @@ Exit code 0 means every assertion in cases.json held.
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from context_tax.analyze import analyze  # noqa: E402
-from context_tax.discover import collect  # noqa: E402
+from context_tax.discover import _age_days, collect  # noqa: E402
 
 GREEN, RED, DIM, RESET = "\x1b[32m", "\x1b[31m", "\x1b[2m", "\x1b[0m"
+DAY = 86400
+
+
+def units() -> tuple[list[str], int]:
+    """不依赖 fixture 文件的断言。
+
+    这些数字 fixture 造不出来——mtime 在 git 里不保存，clone 下来全是 checkout
+    那一刻。所以凡是关于「时间」的逻辑，都在这里用临时文件直接测。
+    """
+    failures: list[str] = []
+    n = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        f = Path(tmp) / "SKILL.md"
+        f.write_text("---\nname: x\n---\nbody\n", encoding="utf-8")
+
+        def age(set_to: float, fm: dict | None = None) -> int:
+            nonlocal n
+            n += 1
+            os.utime(f, (set_to, set_to))
+            return _age_days(f, fm)
+
+        # 插件缓存里真实见过的 mtime=0。照字面算会变成 20753 天。
+        if age(0.0) != 0:
+            failures.append(f"mtime=0 应该当作未知（返回 0），实际 {age(0.0)}")
+        if age(1.0) != 0:
+            failures.append("mtime=1 应该当作未知（返回 0）")
+
+        now = time.time()
+        got = age(now - 400 * DAY)
+        if not (399 <= got <= 401):
+            failures.append(f"400 天前的文件算出了 {got} 天")
+
+        # frontmatter 的日期优先于 mtime：clone 之后 mtime 是今天，但作者说了实话
+        got = age(now - 10 * DAY, {"updated": "2025-01-01"})
+        if got < 200:
+            failures.append(f"frontmatter 的 updated 没盖过 mtime（算出 {got} 天）")
+
+        # 未来的日期不能算出负数
+        if age(now + 90 * DAY) != 0:
+            failures.append("未来时间应该夹到 0")
+
+    return failures, n
 
 
 def check(case: dict, verbose: bool) -> list[str]:
@@ -82,6 +127,10 @@ def main() -> int:
     spec = json.loads((ROOT / "evals" / "cases.json").read_text(encoding="utf-8"))
 
     all_failures: list[str] = []
+    unit_failures, unit_n = units()
+    all_failures += unit_failures
+    if verbose:
+        print(f"  {DIM}units: {unit_n} 项时间断言{RESET}")
     for case in spec["cases"]:
         all_failures += check(case, verbose)
 
@@ -91,7 +140,7 @@ def main() -> int:
             print(f"  {RED}FAIL{RESET}  {f}")
         print(f"\n  {RED}{len(all_failures)} 项断言失败{RESET}\n")
         return 1
-    print(f"  {GREEN}PASS{RESET}  {len(spec['cases'])} 个 fixture，全部断言通过\n")
+    print(f"  {GREEN}PASS{RESET}  {len(spec['cases'])} 个 fixture + 时间断言，全部通过\n")
     return 0
 
 

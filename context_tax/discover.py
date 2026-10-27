@@ -159,13 +159,21 @@ def _days_since(raw: str) -> int | None:
         return None
 
 
+# mtime 早于这个时间一律当作「未知」而不是「很老」。打包工具、zip 解压、
+# 部分插件缓存会把 mtime 写成 0（1970-01-01），照字面算就是一个 56 岁的文件。
+MTIME_FLOOR = 631152000  # 1990-01-01
+
+
 def _age_days(path: Path, fm: dict | None = None) -> int:
-    """多久没改了。
+    """多久没改了。拿不到可信日期时返回 0（= 不报陈旧）。
 
     **优先看 frontmatter 里声明的日期，其次才看 mtime。** 因为 mtime 在全新
     clone、CI、Docker 镜像里一律等于「刚刚 checkout 的时间」——所有文件看起来
     都是今天刚改的，`skill-stale` 会静默失效，报出一个偏低的年龄。
     作者可以在 frontmatter 里写 `updated: 2025-03-14` 显式声明，它会优先被采信。
+
+    另一个方向的谎话更难看：`mtime = 0`。插件缓存里真的见过——报告会理直气壮
+    地写「最老的是 create-pet，20753 天」。与其编一个精确的错数，不如不报。
     """
     if fm:
         for key in AGE_DATE_KEYS:
@@ -175,9 +183,12 @@ def _age_days(path: Path, fm: dict | None = None) -> int:
                 if age is not None:
                     return age
     try:
-        return max(0, int((time.time() - path.stat().st_mtime) // 86400))
+        mtime = path.stat().st_mtime
     except OSError:
         return 0
+    if mtime < MTIME_FLOOR:
+        return 0
+    return max(0, int((time.time() - mtime) // 86400))
 
 
 # --- discovery ---------------------------------------------------------------
